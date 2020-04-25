@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import com.atguigu.member.bean.{DwsMember, DwsMember_Result, MemberZipper, MemberZipperResult}
 import com.atguigu.member.dao.DwdMemberDao
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.SizeEstimator
 object DwsMemberService {
@@ -18,7 +18,7 @@ object DwsMemberService {
     val dwdPcentermemPaymoney = DwdMemberDao.getDwdPcentermemPayMoney(sparkSession)
     val dwdVipLevel = DwdMemberDao.getDwdVipLevel(sparkSession)
     //    import org.apache.spark.sql.functions.broadcast
-    val result = dwdMember.join(dwdMemberRegtype, Seq("uid", "dn"), "left")
+    val result: Dataset[DwsMember] = dwdMember.join(dwdMemberRegtype, Seq("uid", "dn"), "left")
       .join(dwdBaseAd, Seq("ad_id", "dn"), "left_outer")
       .join(dwdBaseWebsite, Seq("siteid", "dn"), "left_outer")
       .join(dwdPcentermemPaymoney, Seq("uid", "dn"), "left_outer")
@@ -118,7 +118,7 @@ object DwsMemberService {
       s"dwd.dwd_vip_level b on a.vip_id=b.vip_id and a.dn=b.dn where a.dt='$time' group by uid").as[MemberZipper]
 
     //查询历史拉链表数据
-    val historyResult = sparkSession.sql("select *from dws.dws_member_zipper").as[MemberZipper]
+    val historyResult = sparkSession.sql("select * from dws.dws_member_zipper").as[MemberZipper]
     //两份数据根据用户id进行聚合 对end_time进行重新修改
     val reuslt = dayResult.union(historyResult).groupByKey(item => item.uid + "_" + item.dn)
       .mapGroups { case (key, iters) =>

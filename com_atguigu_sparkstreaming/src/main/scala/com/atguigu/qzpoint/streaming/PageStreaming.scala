@@ -260,3 +260,5 @@ object PageStreaming {
     sqlProxy.executeUpdate(client, "update page_jump_rate set jump_rate=? where page_id=?", Array(page2ToPage3Rate, 3))
   }
 }
+
+
